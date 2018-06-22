@@ -2,6 +2,8 @@ import cosc343.assig2.World;
 import cosc343.assig2.Creature;
 import java.util.*;
 
+
+
 /**
 * The MyWorld extends the cosc343 assignment 2 World.  Here you can set 
 * some variables that control the simulations and override functions that
@@ -18,8 +20,12 @@ public class MyWorld extends World {
    * and the number of generations that the genetic algorithm will 
    * execute.
   */
-  private final int _numTurns = 100;
-  private final int _numGenerations = 500;
+    private final int _numTurns = 100;
+    private final int _numGenerations = 500;
+    int numPercepts = 0;
+    int numActions = 0;
+    int av_fitness = 0;
+
   
 
   
@@ -80,8 +86,8 @@ public class MyWorld extends World {
   @Override
   public MyCreature[] firstGeneration(int numCreatures) {
 
-    int numPercepts = this.expectedNumberofPercepts();
-    int numActions = this.expectedNumberofActions();
+    numPercepts = this.expectedNumberofPercepts();
+    numActions = this.expectedNumberofActions();
       
     // This is just an example code.  You may replace this code with
     // your own that initialises an array of size numCreatures and creates
@@ -119,7 +125,7 @@ public class MyWorld extends World {
      MyCreature[] old_population = (MyCreature[]) old_population_btc;
      // Create a new array for the new population
      MyCreature[] new_population = new MyCreature[numCreatures];
-     
+
      // Here is how you can get information about old creatures and how
      // well they did in the simulation
      float avgLifeTime=0f;
@@ -134,41 +140,99 @@ public class MyWorld extends World {
         // This querry can tell you if the creature died during simulation
         // or not.  
         boolean dead = creature.isDead();
+        int fitness = 0;
         
         if(dead) {
            // If the creature died during simulation, you can determine
            // its time of death (in turns)
            int timeOfDeath = creature.timeOfDeath();
            avgLifeTime += (float) timeOfDeath;
+           fitness += timeOfDeath;
         } else {
            nSurvivors += 1;
            avgLifeTime += (float) _numTurns;
+           fitness += _numTurns;
         }
+
+	av_fitness += fitness;
      }
+
+     av_fitness /= numCreatures;
+     System.out.println(av_fitness);
 
      // Right now the information is used to print some stats...but you should
      // use this information to access creatures fitness.  It's up to you how
      // you define your fitness function.  You should add a print out or
      // some visual display of average fitness over generations.
      avgLifeTime /= (float) numCreatures;
-     System.out.println("Simulation stats:");
-     System.out.println("  Survivors    : " + nSurvivors + " out of " + numCreatures);
-     System.out.println("  Avg life time: " + avgLifeTime + " turns");
+     // System.out.println("Simulation stats:");
+     // System.out.println("  Survivors    : " + nSurvivors + " out of " + numCreatures);
+     // System.out.println("  Avg life time: " + avgLifeTime + " turns");
 
      
      // Having some way of measuring the fitness, you should implement a proper
-     // parent selection method here and create a set of new creatures.  You need
+     // parent selection method here and create a set of new creatures.
+     //You need
      // to create numCreatures of the new creatures.  If you'd like to have
      // some elitism, you can use old creatures in the next generation.  This
      // example code uses all the creatures from the old generation in the
      // new generation.
+     
+     //int mating = rand.nextInt(numCreatures);//make not random
+     int creature_fitness = 0;
+     int fittest = 0;
+     int most_fit = 0;
+ 
      for(int i=0;i<numCreatures; i++) {
-        new_population[i] = old_population[i];
+         //new_population[i] = old_population[i];
+
+
+         /*
+           Get the fittest creature in the old population
+          */
+         for(int f = 0; f < numCreatures; f++){
+
+             if(creature_fitness < old_population[f].getFitness()){
+                 creature_fitness = old_population[f].getFitness();
+                 fittest = f;
+                 most_fit = creature_fitness;
+             }
+         }
+
+             
+         int[] parent1 = old_population[fittest].getChromosome();
+         //set parent1 to be the fittest from the old population
+  
+
+         /*
+           Find the second fittest creature in the old population
+          */
+         for(int f = 0; f < numCreatures; f++){
+
+             if(old_population[f].getFitness() < most_fit){
+                 creature_fitness = old_population[f].getFitness();
+                 fittest = f;
+             }
+         }
+         
+         
+        
+         int[] parent2 = old_population[fittest].getChromosome();
+         //set parent2 to be the second fittest from the population
+
+	 //create a child using the two fittest parents
+         MyCreature child = new MyCreature(numPercepts, numActions);
+         int[] baby = child.baby(parent1, parent2);
+         child.setChromosome(baby);
+         
+         new_population[i] = child;
+         
      }
      
      
      // Return new population of cratures.
      return new_population;
   }
+
   
 }
